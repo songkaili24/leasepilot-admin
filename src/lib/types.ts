@@ -160,3 +160,49 @@ export interface LeaseStatusCount {
   status: LeaseStatus;
   count: number;
 }
+
+export type PlatformRole = 'Admin' | 'Property Manager' | 'Read-Only';
+
+export type AuditActionType =
+  | 'Sign-in'
+  | 'Sign-out'
+  | 'Lease created'
+  | 'Lease updated'
+  | 'Status change'
+  | 'Document upload'
+  | 'Document delete'
+  | 'Note added'
+  | 'User invited'
+  | 'Role change'
+  | 'Settings change'
+  | 'Export';
+
+/** Immutable audit entry: who did what to which record, and when. */
+export interface AuditEntry {
+  id: string;
+  at: string;
+  actor: string;
+  action: AuditActionType;
+  record: string;
+  recordHref?: string;
+  detail: string;
+  source: 'web' | 'api';
+}
+
+export interface PlatformUser {
+  id: string;
+  name: string;
+  email: string;
+  role: PlatformRole;
+  lastActiveAt: string | null;
+  status: 'Active' | 'Invited' | 'Suspended';
+}
+
+/** Permission matrix row: what each platform role may do. */
+export interface PermissionMatrixRow {
+  capability: string;
+  description: string;
+  admin: boolean;
+  propertyManager: boolean;
+  readOnly: boolean;
+}
