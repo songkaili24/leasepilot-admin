@@ -16,6 +16,7 @@ export type ObligationCategory =
   | 'Base Rent'
   | 'CAM'
   | 'Real Estate Taxes'
+  | 'Tax Escrow'
   | 'Insurance'
   | 'Utilities'
   | 'Janitorial'
@@ -29,6 +30,12 @@ export interface Portfolio {
   propertyCount: number;
 }
 
+export interface Contact {
+  name: string;
+  phone: string;
+  email: string;
+}
+
 export interface Property {
   id: string;
   name: string;
@@ -38,6 +45,7 @@ export interface Property {
   postalCode: string;
   type: PropertyType;
   grossFloorAreaSf: number;
+  yearBuilt: number;
   portfolioId: string;
 }
 
@@ -69,6 +77,8 @@ export interface Lease {
   renewalOptions: Array<{ option: number; noticeDeadline: string; termYears: number }>;
   brokerOfRecord: string;
   propertyManager: string;
+  propertyManagerContact: Contact;
+  permittedUse: string;
   updatedBy: string;
   updatedAt: string;
 }
@@ -104,6 +114,46 @@ export interface VaultDocument {
   uploadedBy: string;
   uploadedAt: string;
   version: string;
+}
+
+/** Threaded note on a lease record. Replies reference their parent via `parentId`. */
+export interface LeaseNote {
+  id: string;
+  leaseId: string;
+  author: string;
+  authorRole: string;
+  /** ISO datetime. */
+  createdAt: string;
+  body: string;
+  parentId: string | null;
+}
+
+export type ActivityKind = 'Amendment' | 'Document' | 'Status' | 'Payment' | 'Deadline';
+
+export interface ActivityEvent {
+  id: string;
+  kind: ActivityKind;
+  leaseId: string;
+  summary: string;
+  actor: string;
+  /** ISO datetime. */
+  at: string;
+}
+
+/** Portfolio-level occupancy for one month; `month` is `YYYY-MM`. */
+export interface OccupancyPoint {
+  month: string;
+  occupancy: number;
+}
+
+export interface RentScheduleRow {
+  leaseYear: number;
+  periodStart: string;
+  periodEnd: string;
+  monthlyRent: number;
+  annualRent: number;
+  /** Escalation applied at the start of this lease year (0 for year 1). */
+  escalationPct: number;
 }
 
 export interface LeaseStatusCount {

@@ -94,3 +94,30 @@ export function isSameMonth(value: string, monthRef: Date): boolean {
 export function isWithin(target: string, start: string, end: string): boolean {
   return diffInDays(start, target) >= 0 && diffInDays(target, end) > 0;
 }
+
+/** "Sep 3, 2026, 2:15 PM" — accepts ISO datetime strings. */
+export function formatDateTime(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+/** Coarse relative time for activity feeds: "Just now", "4h ago", "3d ago". */
+export function timeAgo(value: string): string {
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return value;
+  const minutes = Math.round((Date.now() - then) / 60_000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(value.slice(0, 10));
+}

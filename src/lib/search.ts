@@ -1,4 +1,4 @@
-import { criticalDates, documents, leases, obligations, portfolios, properties } from './data';
+import { criticalDates, documents, leases, obligations, properties } from './data';
 import type { CriticalDate, Lease, Obligation, VaultDocument } from './types';
 
 export interface SearchHit {
@@ -60,6 +60,7 @@ export function searchEverything(query: string, limit = 8): SearchHit[] {
 export interface UpcomingDate extends CriticalDate {
   leaseNumber: string;
   tenantName: string;
+  propertyId: string;
 }
 
 /** All critical dates joined with their lease, sorted soonest first. */
@@ -69,7 +70,12 @@ export function allUpcomingDates(): UpcomingDate[] {
     .map((c) => {
       const lease = byId.get(c.leaseId);
       if (!lease) return null;
-      return { ...c, leaseNumber: lease.leaseNumber, tenantName: lease.tenantName };
+      return {
+        ...c,
+        leaseNumber: lease.leaseNumber,
+        tenantName: lease.tenantName,
+        propertyId: lease.propertyId,
+      };
     })
     .filter((c): c is UpcomingDate => c !== null)
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
@@ -78,6 +84,7 @@ export function allUpcomingDates(): UpcomingDate[] {
 export interface DocumentRow extends VaultDocument {
   leaseNumber: string;
   tenantName: string;
+  propertyId: string;
 }
 
 /** All vault documents joined with their lease. */
@@ -87,7 +94,12 @@ export function allDocuments(): DocumentRow[] {
     .map((d) => {
       const lease = byId.get(d.leaseId);
       if (!lease) return null;
-      return { ...d, leaseNumber: lease.leaseNumber, tenantName: lease.tenantName };
+      return {
+        ...d,
+        leaseNumber: lease.leaseNumber,
+        tenantName: lease.tenantName,
+        propertyId: lease.propertyId,
+      };
     })
     .filter((d): d is DocumentRow => d !== null);
 }
@@ -95,6 +107,7 @@ export function allDocuments(): DocumentRow[] {
 export interface ObligationRow extends Obligation {
   leaseNumber: string;
   tenantName: string;
+  propertyId: string;
 }
 
 /** All obligations joined with their lease. */
@@ -108,6 +121,7 @@ export function allObligations(): ObligationRow[] {
         ...o,
         leaseNumber: lease.leaseNumber,
         tenantName: lease.tenantName,
+        propertyId: lease.propertyId,
       };
     })
     .filter((o): o is ObligationRow => o !== null);
