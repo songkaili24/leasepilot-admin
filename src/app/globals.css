@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-navy-900 antialiased;
+  }
+
+  /* Dense financial tables read best with tabular numerals everywhere. */
+  table {
+    border-collapse: collapse;
+  }
+}
+
+@layer utilities {
+  .shadow-popover {
+    box-shadow: 0 4px 16px -2px rgb(15 23 42 / 0.12), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  }
+}
