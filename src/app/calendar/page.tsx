@@ -1,4 +1,5 @@
 import { CriticalDatesView } from './_components/CriticalDatesView';
+import { allUpcomingDates } from '@/lib/search';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
@@ -9,5 +10,5 @@ export const metadata = pageMetadata({
 });
 
 export default function CriticalDatesPage() {
-  return <CriticalDatesView />;
+  return <CriticalDatesView allDates={allUpcomingDates()} />;
 }
