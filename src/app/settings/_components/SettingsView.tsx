@@ -1,39 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, FileClock, Landmark, ScrollText, ShieldCheck } from 'lucide-react';
 import { Badge, Button } from '@/components/ui';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { portfolios } from '@/lib/data';
+import { RETENTION_TEMPLATE_LABEL } from '@/lib/data';
 
-const TEAM = [
-  {
-    name: 'Kelly Warren',
-    email: 'k.warren@leasevault.com',
-    role: 'Portfolio Administrator',
-    lastActive: 'Active now',
-  },
-  {
-    name: 'Dana Okafor',
-    email: 'd.okafor@leasevault.com',
-    role: 'Asset Manager',
-    lastActive: '2 hours ago',
-  },
-  {
-    name: 'Ravi Patel',
-    email: 'r.patel@leasevault.com',
-    role: 'Lease Analyst',
-    lastActive: 'Yesterday',
-  },
-  {
-    name: 'S. Whitfield',
-    email: 's.whitfield@leasevault.com',
-    role: 'Read-only Auditor',
-    lastActive: '3 days ago',
-  },
-];
+const inputClasses =
+  'h-9 w-full max-w-sm rounded-md border border-slate-300 bg-white px-3 text-sm text-navy-900 placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-700';
+const labelClasses = 'block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1';
+const cardClasses = 'rounded-md border border-slate-200 bg-white p-4 shadow-sm';
+const cardHeading = 'text-sm font-semibold text-navy-900';
 
-const NOTIFICATIONS = [
+const NOTIFICATION_RULES = [
   { id: 'critical-30', label: 'Critical date reminders (30-day window)', defaultChecked: true },
   {
     id: 'critical-90',
@@ -49,14 +29,18 @@ const NOTIFICATIONS = [
   { id: 'weekly-digest', label: 'Weekly portfolio digest (Monday 7:00 AM)', defaultChecked: true },
 ];
 
-const inputClasses =
-  'h-9 w-full max-w-sm rounded-md border border-slate-300 bg-white px-3 text-sm text-navy-900 placeholder:text-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-700';
-const labelClasses = 'block text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1';
-const cardClasses = 'rounded-md border border-slate-200 bg-white p-4 shadow-sm';
-const cardHeading = 'text-sm font-semibold text-navy-900';
+const RETENTION_RULES = [
+  { id: 'lease-agreements', label: 'Lease agreements & amendments', defaultYears: 10 },
+  { id: 'correspondence', label: 'Correspondence & notices', defaultYears: 3 },
+  { id: 'coi', label: 'Certificates of insurance', defaultYears: 5 },
+  { id: 'financial', label: 'Reconciliation & billing records', defaultYears: 7 },
+];
+
+const SECTION_ICON = 'mt-0.5 h-4 w-4 shrink-0 text-slate-400';
 
 export function SettingsView() {
   const [saved, setSaved] = useState(false);
+  const [auditImmutable, setAuditImmutable] = useState(true);
 
   function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -68,13 +52,14 @@ export function SettingsView() {
     <>
       <PageHeader
         title="Settings"
-        description="Workspace defaults, alert thresholds, and team access. Changes apply immediately to your session."
+        description="Portfolio configuration, notification rules, document retention, and audit controls. Changes apply immediately and are recorded in the audit log."
       />
 
       <form onSubmit={handleSave} className="space-y-4">
         <section aria-labelledby="workspace-heading" className={cardClasses}>
-          <h2 id="workspace-heading" className={cardHeading}>
-            Workspace defaults
+          <h2 id="workspace-heading" className={`flex items-center gap-2 ${cardHeading}`}>
+            <Landmark aria-hidden className={SECTION_ICON} />
+            Portfolio configuration
           </h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
@@ -111,68 +96,101 @@ export function SettingsView() {
         </section>
 
         <section aria-labelledby="alerts-heading" className={cardClasses}>
-          <h2 id="alerts-heading" className={cardHeading}>
-            Alert thresholds &amp; notifications
+          <h2 id="alerts-heading" className={`flex items-center gap-2 ${cardHeading}`}>
+            <ScrollText aria-hidden className={SECTION_ICON} />
+            Default notification rules
           </h2>
           <p className="mt-1 text-sm text-slate-500">
             Red window: deadlines due within 30 days or overdue. Amber window: 90 days.
           </p>
           <ul role="list" className="mt-3 space-y-2.5">
-            {NOTIFICATIONS.map((notification) => (
-              <li key={notification.id}>
+            {NOTIFICATION_RULES.map((rule) => (
+              <li key={rule.id}>
                 <label className="flex cursor-pointer items-center gap-2.5 text-sm text-navy-900">
                   <input
                     type="checkbox"
-                    defaultChecked={notification.defaultChecked}
-                    className="h-4 w-4 rounded border-slate-300 text-teal-700 accent-teal-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+                    defaultChecked={rule.defaultChecked}
+                    className="h-4 w-4 rounded border-slate-300 accent-teal-700"
                   />
-                  {notification.label}
+                  {rule.label}
                 </label>
               </li>
             ))}
           </ul>
         </section>
 
-        <section aria-labelledby="team-heading" className={cardClasses}>
-          <h2 id="team-heading" className={cardHeading}>
-            Team access
+        <section aria-labelledby="retention-heading" className={cardClasses}>
+          <h2 id="retention-heading" className={`flex items-center gap-2 ${cardHeading}`}>
+            <FileClock aria-hidden className={SECTION_ICON} />
+            Document retention policies
           </h2>
-          <div className="mt-3 overflow-x-auto rounded-md border border-slate-200">
-            <table className="w-full min-w-[34rem] text-sm">
-              <caption className="sr-only">Team members with workspace access</caption>
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th scope="col" className="px-4 py-2">
-                    Name
-                  </th>
-                  <th scope="col" className="px-4 py-2">
-                    Email
-                  </th>
-                  <th scope="col" className="px-4 py-2">
-                    Role
-                  </th>
-                  <th scope="col" className="px-4 py-2 text-right">
-                    Last active
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {TEAM.map((member) => (
-                  <tr key={member.email}>
-                    <td className="px-4 py-2.5 font-medium text-navy-900">{member.name}</td>
-                    <td className="px-4 py-2.5 text-slate-600">{member.email}</td>
-                    <td className="px-4 py-2.5">
-                      <Badge tone={member.role === 'Portfolio Administrator' ? 'teal' : 'slate'}>
-                        {member.role}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-xs text-slate-500">
-                      {member.lastActive}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <p className="mt-1 text-sm text-slate-500">{RETENTION_TEMPLATE_LABEL}</p>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {RETENTION_RULES.map((rule) => (
+              <div key={rule.id}>
+                <label htmlFor={`retention-${rule.id}`} className={labelClasses}>
+                  {rule.label}
+                </label>
+                <select
+                  id={`retention-${rule.id}`}
+                  className={`${inputClasses} max-w-none`}
+                  defaultValue={String(rule.defaultYears)}
+                >
+                  <option value="3">3 years after termination</option>
+                  <option value="5">5 years after termination</option>
+                  <option value="7">7 years after termination</option>
+                  <option value="10">10 years after termination</option>
+                  <option value="0">Retain permanently</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="security-heading" className={cardClasses}>
+          <h2 id="security-heading" className={`flex items-center gap-2 ${cardHeading}`}>
+            <ShieldCheck aria-hidden className={SECTION_ICON} />
+            Security &amp; audit controls
+          </h2>
+          <div className="mt-3 space-y-3">
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-navy-900">
+              <input
+                type="checkbox"
+                checked={auditImmutable}
+                onChange={(e) => setAuditImmutable(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-700"
+              />
+              <span>
+                Append-only audit trail
+                <span className="block text-xs font-normal text-slate-500">
+                  Entries cannot be edited or deleted by any role, including Admins.
+                </span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2.5 text-sm text-navy-900">
+              <input
+                type="checkbox"
+                defaultChecked
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-teal-700"
+              />
+              <span>
+                Require SSO with MFA for all users
+                <span className="block text-xs font-normal text-slate-500">
+                  Okta SAML 2.0 with TOTP second factor; sessions expire after 30 minutes idle.
+                </span>
+              </span>
+            </label>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Badge tone="teal" dot>
+                Encryption at rest (AES-256)
+              </Badge>
+              <Badge tone="teal" dot>
+                TLS 1.3 in transit
+              </Badge>
+              <Badge tone="navy" dot>
+                SOC 2 Type II
+              </Badge>
+            </div>
           </div>
         </section>
 
