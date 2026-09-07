@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { GlobalSearch } from './GlobalSearch';
 import { PortfolioSelect } from './PortfolioSelect';
-import { NewLeaseAbstractButton } from './NewLeaseAbstractButton';
+import { AbstractWizardButton } from './AbstractWizardButton';
 import { Sidebar } from './Sidebar';
 
 export function CommandBar() {
@@ -50,7 +50,7 @@ export function CommandBar() {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <PortfolioSelect />
-          <NewLeaseAbstractButton />
+          <AbstractWizardButton />
           <div aria-hidden className="hidden h-6 w-px bg-slate-200 md:block" />
           <div className="hidden items-center gap-2.5 md:flex">
             <span

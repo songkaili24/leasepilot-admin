@@ -3,7 +3,7 @@ import { Banknote, CalendarClock, FileSignature, History, Upload } from 'lucide-
 import { OccupancyChart } from '@/components/charts/OccupancyChart';
 import { DaysRemainingBadge } from '@/components/ui/DaysRemainingBadge';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { NewLeaseAbstractButton } from '@/components/layout/NewLeaseAbstractButton';
+import { AbstractWizardButton } from '@/components/layout/AbstractWizardButton';
 import { StatCard, Timeline } from '@/components/ui';
 import {
   activityEvents,
@@ -102,7 +102,7 @@ export function DashboardView() {
         description={`${formatNumber(leases.length)} lease abstracts across ${properties.length} properties · data as of ${today}`}
         actions={
           <>
-            <NewLeaseAbstractButton size="md" />
+            <AbstractWizardButton size="md" />
             <Link href="/reports" className={outlineButton}>
               Generate Report
             </Link>
