@@ -10,7 +10,7 @@ export default function NotFound() {
         description="The page you requested does not exist, or the lease record may have been archived."
         action={
           <div className="flex gap-2">
-            <Link href="/">
+            <Link href="/dashboard">
               <Button variant="outline" size="sm">
                 Back to dashboard
               </Button>
