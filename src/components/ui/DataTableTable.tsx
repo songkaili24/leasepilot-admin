@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip } from './Tooltip';
@@ -16,7 +17,14 @@ interface DataTableTableProps<T> {
   interactive: boolean;
   onRowActivate: (row: T) => void;
   ariaLabel: string;
+  selectable: boolean;
+  selectedIds: ReadonlySet<string>;
+  allPageSelected: boolean;
+  onTogglePageSelection: (checked: boolean) => void;
+  onToggleRowSelection: (rowId: string) => void;
 }
+
+const checkboxClasses = 'h-4 w-4 rounded border-slate-300 accent-teal-700';
 
 /** Sortable header + body rows. Presentational; state lives in DataTable. */
 export function DataTableTable<T>({
@@ -28,11 +36,37 @@ export function DataTableTable<T>({
   interactive,
   onRowActivate,
   ariaLabel,
+  selectable,
+  selectedIds,
+  allPageSelected,
+  onTogglePageSelection,
+  onToggleRowSelection,
 }: DataTableTableProps<T>) {
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+  const somePageSelected = pageRows.some((row) => selectedIds.has(getRowId(row)));
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = somePageSelected && !allPageSelected;
+    }
+  }, [somePageSelected, allPageSelected]);
+
   return (
     <table className="w-full min-w-[56rem] border-collapse text-sm" aria-label={ariaLabel}>
       <thead>
         <tr className="border-b border-slate-200 bg-slate-50">
+          {selectable ? (
+            <th scope="col" className="w-10 px-3 py-2.5">
+              <input
+                ref={headerCheckboxRef}
+                type="checkbox"
+                checked={allPageSelected}
+                onChange={(e) => onTogglePageSelection(e.target.checked)}
+                aria-label="Select all rows on this page"
+                className={checkboxClasses}
+              />
+            </th>
+          ) : null}
           {columns.map((column) => {
             const isSorted = sortState?.key === column.key;
             const ariaSort = isSorted
@@ -88,29 +122,45 @@ export function DataTableTable<T>({
         </tr>
       </thead>
       <tbody className="divide-y divide-slate-100">
-        {pageRows.map((row) => (
-          <tr
-            key={getRowId(row)}
-            onClick={interactive ? () => onRowActivate(row) : undefined}
-            className={cn(
-              'bg-white transition-colors',
-              interactive && 'cursor-pointer hover:bg-slate-50',
-            )}
-          >
-            {columns.map((column) => (
-              <td
-                key={column.key}
-                className={cn(
-                  'px-4 py-2.5 text-navy-900',
-                  column.align === 'right' ? 'text-right' : 'text-left',
-                  column.className,
-                )}
-              >
-                {column.render ? column.render(row) : String(column.accessor?.(row) ?? '')}
-              </td>
-            ))}
-          </tr>
-        ))}
+        {pageRows.map((row) => {
+          const rowId = getRowId(row);
+          const isSelected = selectable && selectedIds.has(rowId);
+          return (
+            <tr
+              key={rowId}
+              onClick={interactive ? () => onRowActivate(row) : undefined}
+              className={cn(
+                'bg-white transition-colors',
+                interactive && 'cursor-pointer hover:bg-slate-50',
+                isSelected && 'bg-teal-50/60',
+              )}
+            >
+              {selectable ? (
+                <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => onToggleRowSelection(rowId)}
+                    aria-label={`Select ${rowId}`}
+                    className={checkboxClasses}
+                  />
+                </td>
+              ) : null}
+              {columns.map((column) => (
+                <td
+                  key={column.key}
+                  className={cn(
+                    'px-4 py-2.5 text-navy-900',
+                    column.align === 'right' ? 'text-right' : 'text-left',
+                    column.className,
+                  )}
+                >
+                  {column.render ? column.render(row) : String(column.accessor?.(row) ?? '')}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

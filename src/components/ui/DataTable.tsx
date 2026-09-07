@@ -40,6 +40,12 @@ export interface DataTableProps<T> {
   searchPlaceholder?: string;
   /** Left toolbar slot for page-level filter controls (status chips, date ranges, …). */
   toolbar?: ReactNode;
+  /** Enables bulk selection: leading checkbox column plus "select all" header. */
+  selectable?: boolean;
+  /** Receives the full set of selected ids across pages (not just the visible page). */
+  onSelectionChange?: (selectedIds: string[]) => void;
+  /** Renders the bulk-action bar shown when one or more rows are selected. */
+  renderBulkActions?: (selectedIds: string[], clearSelection: () => void) => ReactNode;
   pageSizeOptions?: number[];
   initialPageSize?: number;
   /** Noun for the "Showing x of y" line, e.g. "leases". */
@@ -74,6 +80,9 @@ export function DataTable<T>({
   searchable = true,
   searchPlaceholder = 'Search…',
   toolbar,
+  selectable = false,
+  onSelectionChange,
+  renderBulkActions,
   pageSizeOptions = DEFAULT_PAGE_SIZES,
   initialPageSize = 10,
   entityLabel = 'results',
@@ -88,6 +97,7 @@ export function DataTable<T>({
   const [sortState, setSortState] = useState<SortState>(null);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const filterKey = JSON.stringify(columnFilters);
   const sortKey = sortState ? `${sortState.key}:${sortState.direction}` : '';
@@ -140,6 +150,27 @@ export function DataTable<T>({
   const hasActiveFilters = query.trim() !== '' || Object.values(columnFilters).some(Boolean);
   const interactive = Boolean(onRowClick ?? getRowHref);
 
+  function clearSelection() {
+    setSelectedIds(new Set());
+    onSelectionChange?.([]);
+  }
+
+  function toggleRowSelection(rowId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowId)) {
+        next.delete(rowId);
+      } else {
+        next.add(rowId);
+      }
+      onSelectionChange?.([...next]);
+      return next;
+    });
+  }
+
+  const pageSelectedCount = pageRows.filter((row) => selectedIds.has(getRowId(row))).length;
+  const allPageSelected = pageRows.length > 0 && pageSelectedCount === pageRows.length;
+
   function toggleSort(column: DataTableColumn<T>) {
     setSortState((prev) => {
       if (!prev || prev.key !== column.key) return { key: column.key, direction: 'asc' };
@@ -189,6 +220,28 @@ export function DataTable<T>({
           ) : null}
         </div>
       )}
+
+      {selectable && selectedIds.size > 0 ? (
+        <div
+          role="toolbar"
+          aria-label="Bulk actions"
+          className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-teal-50 px-4 py-2.5"
+        >
+          <span aria-live="polite" className="text-sm font-medium text-teal-900">
+            {selectedIds.size} selected
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {renderBulkActions?.([...selectedIds], clearSelection)}
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-xs font-medium text-slate-500 underline-offset-2 hover:text-navy-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+            >
+              Clear selection
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {pageRows.length === 0 ? (
         <div className="border-t border-slate-200">
@@ -258,6 +311,22 @@ export function DataTable<T>({
             interactive={interactive}
             onRowActivate={handleRowActivate}
             ariaLabel={ariaLabel}
+            selectable={selectable}
+            selectedIds={selectedIds}
+            allPageSelected={allPageSelected}
+            onTogglePageSelection={(checked) => {
+              const next = new Set(selectedIds);
+              for (const row of pageRows) {
+                if (checked) {
+                  next.add(getRowId(row));
+                } else {
+                  next.delete(getRowId(row));
+                }
+              }
+              setSelectedIds(next);
+              onSelectionChange?.([...next]);
+            }}
+            onToggleRowSelection={toggleRowSelection}
           />
         </div>
       ) : null}
