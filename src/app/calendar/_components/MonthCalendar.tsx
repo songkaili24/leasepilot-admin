@@ -1,10 +1,14 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Badge, Button } from '@/components/ui';
-import { severityFor } from '@/lib/alerts';
+import { Badge } from '@/components/ui/Badge';
 import {
-  addDays,
+  categoryBadgeTone,
+  categoryDotClass,
+  categoryForDateType,
+  type DateCategory,
+} from '@/lib/calendar';
+import { DaysRemainingBadge } from '@/components/ui/DaysRemainingBadge';
+import {
   formatDayOfMonth,
   formatDate,
   formatWeekdayShort,
@@ -15,28 +19,42 @@ import { cn } from '@/lib/utils';
 import type { UpcomingDate } from '@/lib/search';
 
 const severityDot = { red: 'bg-red-600', amber: 'bg-amber-500', ok: 'bg-teal-600' } as const;
-const severityTone = { red: 'red', amber: 'amber', ok: 'teal' } as const;
-
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
-/** Month grid with per-day critical-date markers and a selected-day detail strip. */
+interface MonthCalendarProps {
+  dates: UpcomingDate[];
+  monthCursor: Date;
+  onMonthChange: (next: Date) => void;
+  selectedDay: string | null;
+  onSelectDay: (iso: string) => void;
+  onExportICal: () => void;
+}
+
+function shiftMonth(cursor: Date, delta: number): Date {
+  return new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1);
+}
+
+/** Month grid with category-colored event dots and a selected-day detail panel. */
 export function MonthCalendar({
   dates,
   monthCursor,
   onMonthChange,
   selectedDay,
   onSelectDay,
-}: {
-  dates: UpcomingDate[];
-  monthCursor: Date;
-  onMonthChange: (next: Date) => void;
-  selectedDay: string | null;
-  onSelectDay: (iso: string) => void;
-}) {
+  onExportICal,
+}: MonthCalendarProps) {
   const todayISO = toISODate(new Date());
   const first = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
-  const gridStart = addDays(toISODate(first), -first.getDay());
-  const gridDays = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+  const gridStart = new Date(first);
+  gridStart.setDate(1 - first.getDay());
+  const gridDays: string[] = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(gridStart);
+    d.setDate(gridStart.getDate() + i);
+    gridDays.push(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+    );
+  }
 
   const byDay = new Map<string, UpcomingDate[]>();
   for (const date of dates) {
@@ -46,47 +64,55 @@ export function MonthCalendar({
   }
 
   const selectedDates = selectedDay ? (byDay.get(selectedDay) ?? []) : [];
-  const selectedIsCurrentMonth = selectedDay ? isSameMonth(selectedDay, monthCursor) : false;
+  const monthDates = dates.filter((d) => isSameMonth(d.dueDate, monthCursor));
+  const monthLabel = monthCursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <>
-      <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+    <div className="flex h-full flex-col">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
         <h2 className="text-sm font-semibold text-navy-900" aria-live="polite">
-          {monthCursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          {monthLabel}
+          <span className="ml-2 font-mono text-xs font-normal tabular-nums text-slate-400">
+            {monthDates.length} event{monthDates.length === 1 ? '' : 's'}
+          </span>
         </h2>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
-            aria-label="Previous month"
-            onClick={() =>
-              onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1))
-            }
-            className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-navy-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
+            aria-label={`Previous month`}
+            onClick={() => onMonthChange(shiftMonth(monthCursor, -1))}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
           >
-            <ChevronLeft className="h-4 w-4" aria-hidden />
+            ‹
           </button>
-          <Button
-            variant="outline"
-            size="xs"
+          <button
+            type="button"
             onClick={() => {
               onMonthChange(new Date());
               onSelectDay(todayISO);
             }}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm font-medium text-navy-800 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
           >
             Today
-          </Button>
+          </button>
           <button
             type="button"
-            aria-label="Next month"
-            onClick={() =>
-              onMonthChange(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1))
-            }
-            className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-navy-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
+            aria-label={`Next month`}
+            onClick={() => onMonthChange(shiftMonth(monthCursor, 1))}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-sm text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
           >
-            <ChevronRight className="h-4 w-4" aria-hidden />
+            ›
+          </button>
+          <button
+            type="button"
+            onClick={onExportICal}
+            className="ml-1.5 rounded-md bg-teal-700 px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-colors hover:bg-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+          >
+            Export .ics
           </button>
         </div>
       </header>
+
       <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/60">
         {WEEKDAYS.map((weekday) => (
           <div
@@ -97,24 +123,23 @@ export function MonthCalendar({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7">
+
+      <div className="grid flex-1 grid-cols-7">
         {gridDays.map((dayISO) => {
           const dayDates = byDay.get(dayISO) ?? [];
           const inMonth = isSameMonth(dayISO, monthCursor);
           const isToday = dayISO === todayISO;
-          const worstSeverity = dayDates.reduce<'red' | 'amber' | 'ok'>((worst, d) => {
-            const s = severityFor(d.dueDate);
-            return s === 'red' ? 'red' : s === 'amber' && worst !== 'red' ? 'amber' : worst;
-          }, 'ok');
           const isSelected = dayISO === selectedDay;
+          const categories = Array.from(new Set(dayDates.map((d) => categoryForDateType(d.type))));
           return (
             <button
               key={dayISO}
               type="button"
               onClick={() => onSelectDay(dayISO)}
               aria-pressed={isSelected}
+              aria-label={`${formatDate(dayISO)}, ${dayDates.length} event${dayDates.length === 1 ? '' : 's'}`}
               className={cn(
-                'relative min-h-[4.25rem] border-b border-r border-slate-100 p-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700',
+                'min-h-[4.5rem] border-b border-r border-slate-100 p-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700',
                 isSelected
                   ? 'bg-teal-50'
                   : inMonth
@@ -130,53 +155,57 @@ export function MonthCalendar({
               >
                 {formatDayOfMonth(dayISO)}
               </span>
-              {dayDates.length > 0 ? (
-                <span className="mt-1 flex flex-wrap items-center gap-0.5">
-                  <span
-                    aria-hidden
-                    className={cn('h-1.5 w-1.5 rounded-full', severityDot[worstSeverity])}
-                  />
-                  <span
-                    className={cn(
-                      'text-[10px] font-medium',
-                      inMonth ? 'text-slate-600' : 'text-slate-400',
-                    )}
-                  >
-                    {dayDates.length} date{dayDates.length === 1 ? '' : 's'}
-                  </span>
+              {categories.length > 0 ? (
+                <span className="mt-1 flex flex-wrap gap-1" aria-hidden>
+                  {categories.slice(0, 4).map((category) => (
+                    <span
+                      key={category}
+                      className={cn('h-1.5 w-1.5 rounded-full', categoryDotClass[category])}
+                    />
+                  ))}
+                </span>
+              ) : null}
+              {dayDates.length > 2 ? (
+                <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
+                  {dayDates.length} events
                 </span>
               ) : null}
             </button>
           );
         })}
       </div>
-      <div className="min-h-[7.5rem] px-4 py-3">
+
+      {/* Selected-day detail panel */}
+      <div className="min-h-[8rem] border-t border-slate-200 px-4 py-3" aria-live="polite">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           {selectedDay
             ? `${formatWeekdayShort(selectedDay)}, ${formatDate(selectedDay)}`
             : 'Select a day'}
-          {!selectedIsCurrentMonth && selectedDay ? (
-            <span className="ml-1.5 font-normal normal-case text-slate-400">
-              (outside displayed month)
-            </span>
-          ) : null}
         </h3>
         {selectedDates.length === 0 ? (
           <p className="mt-2 text-sm text-slate-500">No critical dates fall on this day.</p>
         ) : (
-          <ul role="list" className="mt-2 space-y-2">
+          <ul role="list" className="mt-2 space-y-2.5">
             {selectedDates.map((date) => (
               <li key={date.id} className="flex flex-wrap items-center gap-2 text-sm">
-                <Badge tone={severityTone[severityFor(date.dueDate)]}>{date.type}</Badge>
+                <Badge tone={categoryBadgeTone[categoryForDateType(date.type)]}>
+                  {categoryForDateType(date.type)}
+                </Badge>
                 <span className="font-medium text-navy-900">{date.tenantName}</span>
                 <span className="font-mono text-xs tabular-nums text-slate-500">
                   {date.leaseNumber}
+                </span>
+                <span className="ml-auto">
+                  <DaysRemainingBadge dueDate={date.dueDate} today={todayISO} />
                 </span>
               </li>
             ))}
           </ul>
         )}
       </div>
-    </>
+    </div>
   );
 }
+
+// Re-exported for the sidebar legend.
+export { severityDot };
