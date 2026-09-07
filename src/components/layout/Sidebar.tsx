@@ -8,7 +8,9 @@ import {
   FileText,
   LayoutDashboard,
   LineChart,
+  ScrollText,
   Settings,
+  Users,
   Vault,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -47,8 +49,13 @@ const NAV_SECTIONS: Array<{
   },
   {
     heading: 'Insights',
+    items: [{ href: '/reports', label: 'Reports & Exports', icon: LineChart }],
+  },
+  {
+    heading: 'Administration',
     items: [
-      { href: '/reports', label: 'Reports & Exports', icon: LineChart },
+      { href: '/audit-log', label: 'Audit Log', icon: ScrollText },
+      { href: '/users', label: 'Users', icon: Users },
       { href: '/settings', label: 'Settings', icon: Settings },
     ],
   },
