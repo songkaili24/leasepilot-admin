@@ -38,5 +38,5 @@ export function LeaseTabs({ lease, tabs, panels }: LeaseTabsProps) {
     return { id: tab.id, label: tab.label, count: counts[tab.id], content };
   });
 
-  return <Tabs items={items} />;
+  return <Tabs items={items} switchSkeletonMs={180} />;
 }
