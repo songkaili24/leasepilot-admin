@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Eye, FileDown } from 'lucide-react';
+import Link from 'next/link';
 import { Button, DataTable } from '@/components/ui';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { leases, properties } from '@/lib/data';
@@ -99,6 +100,27 @@ export function LeasesView() {
             </button>
           }
           columns={buildLeaseColumns(today, propertyOptions)}
+          rowQuickActions={(lease) => (
+            <>
+              <Link
+                href={`/leases/${lease.id}`}
+                title="Open abstract"
+                className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-medium text-navy-800 shadow-sm transition-colors hover:border-teal-300 hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
+              >
+                <Eye aria-hidden className="h-3 w-3" />
+                <span className="hidden xl:inline">Open</span>
+              </Link>
+              <button
+                type="button"
+                title="Export row to CSV"
+                onClick={() => exportCsv([lease], lease.leaseNumber)}
+                className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] font-medium text-navy-800 shadow-sm transition-colors hover:border-teal-300 hover:text-teal-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-700"
+              >
+                <FileDown aria-hidden className="h-3 w-3" />
+                <span className="hidden xl:inline">CSV</span>
+              </button>
+            </>
+          )}
           mobileCard={(lease: Lease) => <LeaseCard lease={lease} />}
         />
       </div>
