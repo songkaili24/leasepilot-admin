@@ -22,7 +22,7 @@ const TERM_MONTHS = [36, 60, 84, 120] as const;
  * "New Lease Abstract" primary action — opens an intake form. In production
  * this posts to the abstracting pipeline; here it validates and confirms.
  */
-export function NewLeaseAbstractButton() {
+export function NewLeaseAbstractButton({ size = 'sm' }: { size?: 'sm' | 'md' }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
@@ -64,7 +64,7 @@ export function NewLeaseAbstractButton() {
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size={size} onClick={() => setOpen(true)}>
         <Plus aria-hidden className="h-4 w-4" />
         <span className="hidden sm:inline">New Lease Abstract</span>
         <span className="sm:hidden">Abstract</span>

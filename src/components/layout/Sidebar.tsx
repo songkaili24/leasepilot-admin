@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { allUpcomingDates } from '@/lib/search';
-import { obligations } from '@/lib/data';
+import { leases, obligations } from '@/lib/data';
 import { severityFor } from '@/lib/alerts';
 
 const NAV_SECTIONS: Array<{
@@ -22,14 +22,14 @@ const NAV_SECTIONS: Array<{
     href: string;
     label: string;
     icon: typeof LayoutDashboard;
-    countKey?: 'critical' | 'obligations' | 'documents';
+    countKey?: 'critical' | 'obligations' | 'documents' | 'leases';
   }>;
 }> = [
   {
     heading: 'Portfolio',
     items: [
-      { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/leases', label: 'All Leases', icon: FileText, countKey: 'documents' },
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/leases', label: 'All Leases', icon: FileText, countKey: 'leases' },
     ],
   },
   {
@@ -62,6 +62,8 @@ function useNavCounts(): Record<string, { count: number; urgent: boolean }> {
   const urgentDates = upcoming.filter((d) => severityFor(d.dueDate) === 'red').length;
   counts['critical'] = { count: upcoming.length, urgent: urgentDates > 0 };
 
+  counts['leases'] = { count: leases.length, urgent: false };
+
   const overdueObligations = obligations.filter((o) => o.nextDueDate < toISOToday()).length;
   counts['obligations'] = { count: obligations.length, urgent: overdueObligations > 0 };
 
@@ -87,8 +89,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </p>
             <ul role="list" className="space-y-0.5">
               {section.items.map((item) => {
-                const active =
-                  item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+                const active = pathname.startsWith(item.href);
                 const count = item.countKey ? counts[item.countKey] : undefined;
                 const Icon = item.icon;
                 return (
