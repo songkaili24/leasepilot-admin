@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip } from './Tooltip';
 import type { DataTableColumn } from './DataTable';
+import type { ReactNode } from 'react';
 
 type SortState = { key: string; direction: 'asc' | 'desc' } | null;
 
@@ -13,6 +14,8 @@ interface DataTableTableProps<T> {
   pageRows: T[];
   getRowId: (row: T) => string;
   sortState: SortState;
+  /** Changes when the sort changes; keys the fade/slide animation on rows. */
+  sortKey: string;
   onToggleSort: (column: DataTableColumn<T>) => void;
   interactive: boolean;
   onRowActivate: (row: T) => void;
@@ -22,6 +25,7 @@ interface DataTableTableProps<T> {
   allPageSelected: boolean;
   onTogglePageSelection: (checked: boolean) => void;
   onToggleRowSelection: (rowId: string) => void;
+  rowQuickActions?: (row: T) => ReactNode;
 }
 
 const checkboxClasses = 'h-4 w-4 rounded border-slate-300 accent-teal-700';
@@ -32,6 +36,7 @@ export function DataTableTable<T>({
   pageRows,
   getRowId,
   sortState,
+  sortKey,
   onToggleSort,
   interactive,
   onRowActivate,
@@ -41,6 +46,7 @@ export function DataTableTable<T>({
   allPageSelected,
   onTogglePageSelection,
   onToggleRowSelection,
+  rowQuickActions,
 }: DataTableTableProps<T>) {
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
   const somePageSelected = pageRows.some((row) => selectedIds.has(getRowId(row)));
@@ -52,7 +58,13 @@ export function DataTableTable<T>({
   }, [somePageSelected, allPageSelected]);
 
   return (
-    <table className="w-full min-w-[56rem] border-collapse text-sm" aria-label={ariaLabel}>
+    // The key on <tbody> remounts rows when the sort changes, replaying the
+    // row-sort animation. Disabled states are handled in CSS (reduced motion).
+    <table
+      key={sortKey}
+      className="w-full min-w-[56rem] border-collapse text-sm"
+      aria-label={ariaLabel}
+    >
       <thead>
         <tr className="border-b border-slate-200 bg-slate-50">
           {selectable ? (
@@ -105,9 +117,9 @@ export function DataTableTable<T>({
                     ) : null}
                     {isSorted ? (
                       sortState!.direction === 'asc' ? (
-                        <ArrowUp className="h-3 w-3" aria-hidden />
+                        <ArrowUp className="h-3 w-3 animate-sort-icon" aria-hidden />
                       ) : (
-                        <ArrowDown className="h-3 w-3" aria-hidden />
+                        <ArrowDown className="h-3 w-3 animate-sort-icon" aria-hidden />
                       )
                     ) : (
                       <ArrowUpDown className="h-3 w-3 text-slate-400" aria-hidden />
@@ -119,20 +131,26 @@ export function DataTableTable<T>({
               </th>
             );
           })}
+          {rowQuickActions ? (
+            <th scope="col" className="w-10 px-3 py-2.5">
+              <span className="sr-only">Quick actions</span>
+            </th>
+          ) : null}
         </tr>
       </thead>
       <tbody className="divide-y divide-slate-100">
-        {pageRows.map((row) => {
+        {pageRows.map((row, index) => {
           const rowId = getRowId(row);
           const isSelected = selectable && selectedIds.has(rowId);
           return (
             <tr
               key={rowId}
               onClick={interactive ? () => onRowActivate(row) : undefined}
+              style={{ animationDelay: `${Math.min(index, 15) * 12}ms` }}
               className={cn(
-                'bg-white transition-colors',
+                'group/row animate-row-in bg-white transition-colors',
                 interactive && 'cursor-pointer hover:bg-slate-50',
-                isSelected && 'bg-teal-50/60',
+                isSelected && 'bg-teal-50/60 hover:bg-teal-50',
               )}
             >
               {selectable ? (
@@ -158,6 +176,20 @@ export function DataTableTable<T>({
                   {column.render ? column.render(row) : String(column.accessor?.(row) ?? '')}
                 </td>
               ))}
+              {rowQuickActions ? (
+                <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                  {/* Revealed on row hover / row focus-within; always present for a11y. */}
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1 opacity-0 transition-opacity duration-150',
+                      'focus-within:opacity-100 group-hover/row:opacity-100',
+                      'motion-reduce:transition-none motion-reduce:group-hover/row:opacity-100',
+                    )}
+                  >
+                    {rowQuickActions(row)}
+                  </div>
+                </td>
+              ) : null}
             </tr>
           );
         })}

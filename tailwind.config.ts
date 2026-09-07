@@ -54,11 +54,31 @@ const config: Config = {
           from: { opacity: '0', transform: 'scale(0.97)' },
           to: { opacity: '1', transform: 'scale(1)' },
         },
+        'page-in': {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'row-in': {
+          from: { opacity: '0', transform: 'translateY(3px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'sort-icon': {
+          from: { transform: 'scale(0.6)', opacity: '0' },
+          to: { transform: 'scale(1)', opacity: '1' },
+        },
+        'urgency-pulse': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgb(220 38 38 / 0.45)' },
+          '50%': { boxShadow: '0 0 0 4px rgb(220 38 38 / 0)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 150ms ease-out',
         'slide-in-left': 'slide-in-left 200ms ease-out',
         'scale-in': 'scale-in 150ms ease-out',
+        'page-in': 'page-in 220ms ease-out',
+        'row-in': 'row-in 200ms ease-out both',
+        'sort-icon': 'sort-icon 180ms ease-out',
+        'urgency-pulse': 'urgency-pulse 2s ease-in-out infinite',
       },
     },
   },

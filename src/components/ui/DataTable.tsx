@@ -52,6 +52,8 @@ export interface DataTableProps<T> {
   entityLabel?: string;
   /** Card renderer used below `md`; enables card-based mobile list views. */
   mobileCard?: (row: T) => ReactNode;
+  /** Quick-action buttons revealed on row hover (desktop tables only). */
+  rowQuickActions?: (row: T) => ReactNode;
   emptyState?: ReactNode;
   ariaLabel: string;
   className?: string;
@@ -87,6 +89,7 @@ export function DataTable<T>({
   initialPageSize = 10,
   entityLabel = 'results',
   mobileCard,
+  rowQuickActions,
   emptyState,
   ariaLabel,
   className,
@@ -314,6 +317,8 @@ export function DataTable<T>({
             selectable={selectable}
             selectedIds={selectedIds}
             allPageSelected={allPageSelected}
+            sortKey={sortKey}
+            rowQuickActions={rowQuickActions}
             onTogglePageSelection={(checked) => {
               const next = new Set(selectedIds);
               for (const row of pageRows) {
