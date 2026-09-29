@@ -9,7 +9,9 @@ interface PageMetaInput {
   path: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app.leasevault.com';
+// `??` alone isn't enough: Vercel env vars can be set to an empty string,
+// and `new URL('')` throws during page-data collection.
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://app.leasevault.com';
 
 /** Shared metadata template — every route composes its page metadata through this. */
 export function pageMetadata({ title, description, path }: PageMetaInput): Metadata {
